@@ -32,7 +32,7 @@ export default function LoginPage() {
             Welcome back
           </p>
           <h1 className="mt-3 text-2xl font-semibold text-[#e6edf3]">
-            Smart Bookmarks
+            Smart Bookmarky
           </h1>
           {/* <p className="mt-2 text-sm text-[#8b949e]">Sign in to continue with Google</p> */}
         </div>
