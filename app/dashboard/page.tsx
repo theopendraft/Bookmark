@@ -3,6 +3,8 @@ import { createClient } from "@/lib/supabaseServer";
 import { BookmarkForm } from "@/components/BookmarkForm";
 import { BookmarkList } from "@/components/BookmarkList";
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const supabase = await createClient();
   const {

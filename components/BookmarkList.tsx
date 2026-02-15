@@ -9,6 +9,7 @@ interface Bookmark {
   title: string;
   url: string;
   created_at: string;
+  user_id: string;
 }
 
 export function BookmarkList({
@@ -29,22 +30,36 @@ export function BookmarkList({
   }, [bookmarks]);
 
   useEffect(() => {
+    // Unique channel name per user to prevent conflicts
+    const channelName = `realtime:bookmarks:${userId}`;
+
     const channel = supabase
-      .channel("public:bookmarks")
+      .channel(channelName)
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "bookmarks",
-          filter: `user_id=eq.${userId}`,
+          // Removing the filter from the subscription config to ensure we receive the event
+          // We filter in the callback below instead
         },
         (payload) => {
+          console.log("Realtime event received:", payload);
+          
+          // Manual filtering to ensure security/relevance on client side
+          if (payload.new && 'user_id' in payload.new && payload.new.user_id !== userId) {
+             return;
+          }
+
           if (payload.eventType === "INSERT") {
             setItems((prev) => {
-              // Prevent duplicates if server action re-render happens first
               if (prev.some((item) => item.id === payload.new.id)) return prev;
-              return [payload.new as Bookmark, ...prev];
+              const newBookmark = payload.new as Bookmark;
+              // Ensure we don't add bookmarks for other users (double check)
+              if (newBookmark.user_id && newBookmark.user_id !== userId) return prev;
+              
+              return [newBookmark, ...prev];
             });
           } else if (payload.eventType === "DELETE") {
             setItems((prev) =>
@@ -54,12 +69,7 @@ export function BookmarkList({
         },
       )
       .subscribe((status) => {
-        if (status === "SUBSCRIBED") {
-          console.log("Realtime connected!");
-        }
-        if (status === "CHANNEL_ERROR") {
-          console.error("Realtime connection error");
-        }
+        console.log(`Realtime status for ${channelName}:`, status);
       });
 
     return () => {
