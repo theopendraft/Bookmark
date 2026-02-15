@@ -19,11 +19,17 @@ export async function addBookmark(formData: FormData) {
 
   if (!title || !url) return
 
-  await supabase.from('bookmarks').insert({
+  const { data, error } = await supabase.from('bookmarks').insert({
     title,
     url,
     user_id: user.id,
-  })
+  }).select()
+
+  console.log('Insert result:', { data, error })
+
+  if (error) {
+    console.error('Insert error:', error)
+  }
 
   revalidatePath('/dashboard')
 }
