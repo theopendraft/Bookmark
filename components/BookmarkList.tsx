@@ -49,17 +49,33 @@ export function BookmarkList({
           
           // Manual filtering to ensure security/relevance on client side
           if (payload.new && 'user_id' in payload.new && payload.new.user_id !== userId) {
+             console.log("Filtered out - different user");
              return;
           }
 
           if (payload.eventType === "INSERT") {
+            console.log("Processing INSERT event for bookmark:", payload.new);
             setItems((prev) => {
-              if (prev.some((item) => item.id === payload.new.id)) return prev;
-              const newBookmark = payload.new as Bookmark;
-              // Ensure we don't add bookmarks for other users (double check)
-              if (newBookmark.user_id && newBookmark.user_id !== userId) return prev;
+              console.log("Current items count:", prev.length);
+              console.log("Checking for duplicate ID:", payload.new.id);
               
-              return [newBookmark, ...prev];
+              if (prev.some((item) => item.id === payload.new.id)) {
+                console.log("Duplicate found - skipping");
+                return prev;
+              }
+              
+              const newBookmark = payload.new as Bookmark;
+              console.log("Adding new bookmark:", newBookmark);
+              
+              // Ensure we don't add bookmarks for other users (double check)
+              if (newBookmark.user_id && newBookmark.user_id !== userId) {
+                console.log("User ID mismatch - skipping");
+                return prev;
+              }
+              
+              const updated = [newBookmark, ...prev];
+              console.log("New items count:", updated.length);
+              return updated;
             });
           } else if (payload.eventType === "DELETE") {
             setItems((prev) =>
